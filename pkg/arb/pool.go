@@ -1,6 +1,7 @@
 package arb_update
 
 import (
+	"context"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ type WorkerPool struct {
 	Jobs        chan Job
 	Results     chan Result
 	Done        chan bool
+	Finished    chan bool
 	MaxWorkers  int
 }
 
@@ -43,7 +45,7 @@ func NewWorkerPool(num int) *WorkerPool {
 func (wp *WorkerPool) Allocate(templateEntries map[string]interface{}) {
 	for k, v := range templateEntries {
 		j := Job {
-			Entry: k,
+			Entry:   k,
 			Content: v,
 		}
 		wp.Jobs <- j
@@ -54,6 +56,8 @@ func (wp *WorkerPool) Allocate(templateEntries map[string]interface{}) {
 func (wp *WorkerPool) Run(entries map[string]interface{}) {
 	for n := 0; n < wp.MaxWorkers; n++ {
 		wp.Wg.Add(1)
+		// for debug
+		// go Work(wp.Wg, wp.Jobs, wp.Results, entries, n)
 		go func(id int) {
 			w := &Worker {
 				Wg:      wp.Wg,
@@ -69,7 +73,7 @@ func (wp *WorkerPool) Run(entries map[string]interface{}) {
 	close(wp.Results)
 }
 
-func (wp *WorkerPool) ReadData() *sync.Map {
+func (wp *WorkerPool) ReadData(ctx context.Context) *sync.Map {
 	entries := new(sync.Map)
 	for {
 		select {
@@ -110,4 +114,21 @@ func (w *Worker) Do() {
 		w.Results <- res
 	}
 	w.Wg.Done()
+}
+
+func Work(wg *sync.WaitGroup, jbs <-chan Job, result chan<- Result, ents map[string]interface{}, id int) {
+	for j := range jbs {
+		check := CompareEntries(ents, j.Entry)
+		res := Result {
+			WorkId:    id,
+			KeepEntry: j.Entry,
+		}
+		if check {
+			res.KeepContent = ents[j.Entry]
+		} else {
+			res.KeepContent = j.Content
+		}
+		result <- res
+	}
+	wg.Done()
 }

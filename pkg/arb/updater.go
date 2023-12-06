@@ -1,6 +1,7 @@
 package arb_update
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -47,15 +48,23 @@ func (au *ArbUpdate) ReadAllEntries() (*ArbEntries, error) {
 func (ae *ArbEntries) Merge(maxWorkers int, sortByKey bool) ([]byte, error) {
 	var merged *sync.Map
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	wp := NewWorkerPool(maxWorkers)
 	go wp.Allocate(ae.TemplateEntries)
 	go func() {
-		merged = wp.ReadData()
+		merged = wp.ReadData(ctx)
+		defer cancel()
 	}()
 	wp.Run(ae.LocaleEntries)
 	<- wp.Done
 
-	return MarshalJSON(merged, sortByKey)
+	for {
+		select {
+		case <-ctx.Done():
+			return MarshalJSON(merged, sortByKey)
+		}
+	}
 }
 
 func (ae *ArbEntries) MergeFullOn(sortByKey bool) ([]byte, error) {

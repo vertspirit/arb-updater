@@ -20,17 +20,18 @@ lint:
 
 benchmark:
 	go mod tidy
-	go test -bench=.
+	go test -race -bench=.
 
 .PHONY: test
 test:
 	go mod tidy
-	go test -race -v ./...
+	go test -race -v -args -l="test-data/intl_zh_Hant.arb" -t="test-data/intl_en.arb" ./...
 
 clean:
 	go clean
 	go clean -testcache
 	@if [ -d bin ] ; then rm -rf bin ; fi
+	@if [ -d test ] ; then rm -rf test ; fi
 
 help:
 	@echo "make build VERSION=1.0.0 - compile the binary file with golang codes"

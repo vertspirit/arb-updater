@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"testing"
 	cfg "arb-updater/pkg/config"
 	arb "arb-updater/pkg/arb"
 )
@@ -15,6 +16,8 @@ var (
 )
 
 func init() {
+	testing.Init()
+
 	params = cfg.ParseArguments()
 	if params.PrintVersion {
 		fmt.Printf("Arb-Updater Version %s\nBuilt %s\n", Version, Build)

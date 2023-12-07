@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"testing"
 	cfg "arb-updater/pkg/config"
 	arb "arb-updater/pkg/arb"
 )
@@ -15,6 +17,8 @@ var (
 )
 
 func init() {
+	testing.Init()
+
 	params = cfg.ParseArguments()
 	if params.PrintVersion {
 		fmt.Printf("Arb-Updater Version %s\nBuilt %s\n", Version, Build)
@@ -44,7 +48,8 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		if merged, err = ents.Merge(params.Corutines, params.IsSort); err != nil {
+		ctx := context.Background()
+		if merged, err = ents.Merge(ctx, params.Corutines, params.IsSort); err != nil {
 			slog.Error(err.Error())
 			os.Exit(1)
 		}

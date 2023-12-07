@@ -1,6 +1,7 @@
 package arb_update
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -44,18 +45,26 @@ func (au *ArbUpdate) ReadAllEntries() (*ArbEntries, error) {
 	return ent, nil
 }
 
-func (ae *ArbEntries) Merge(maxWorkers int, sortByKey bool) ([]byte, error) {
+func (ae *ArbEntries) Merge(ctx context.Context, maxWorkers int, sortByKey bool) ([]byte, error) {
 	var merged *sync.Map
+
+	c, cancel := context.WithCancel(ctx)
 
 	wp := NewWorkerPool(maxWorkers)
 	go wp.Allocate(ae.TemplateEntries)
 	go func() {
-		merged = wp.ReadData()
+		merged = wp.ReadData(c)
+		defer cancel()
 	}()
 	wp.Run(ae.LocaleEntries)
 	<- wp.Done
 
-	return MarshalJSON(merged, sortByKey)
+	for {
+		select {
+		case <-c.Done():
+			return MarshalJSON(merged, sortByKey)
+		}
+	}
 }
 
 func (ae *ArbEntries) MergeFullOn(sortByKey bool) ([]byte, error) {
@@ -64,7 +73,7 @@ func (ae *ArbEntries) MergeFullOn(sortByKey bool) ([]byte, error) {
 }
 
 func MarshalJSON(m *sync.Map, sortByKey bool) ([]byte, error) {
-	data := make(map[interface{}]interface{})
+	data := make(map[string]interface{})
 	m.Range(func(k, v interface{}) bool {
 		data[k.(string)] = v
 		return true
@@ -72,7 +81,7 @@ func MarshalJSON(m *sync.Map, sortByKey bool) ([]byte, error) {
 	if sortByKey {
 		keys := make([]string, 0, len(data))
 		for k := range data {
-			keys = append(keys, k.(string))
+			keys = append(keys, k)
 		}
 
 		sort.Strings(keys)

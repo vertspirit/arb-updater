@@ -2,6 +2,8 @@ BINARY_NAME = arb-updater
 VERSION     = 1.0.0
 BUILD_DATE  = $(shell date +%F)
 BUILD_FLAGS = "-X main.Version=${VERSION} -X main.Build=${BUILD_DATE}"
+BENCHCOUNT  = 1
+BENCHTIME   = 5x
 
 .PHONY: build
 build:
@@ -20,7 +22,7 @@ lint:
 
 benchmark:
 	go mod tidy
-	go test -race -bench=.
+	go test -race -bench=. -count=${BENCHCOUNT} -benchtime=${BENCHTIME} -args -l="test-data/intl_zh_Hant.arb" -t="test-data/intl_en.arb"
 
 .PHONY: test
 test:
@@ -37,6 +39,6 @@ help:
 	@echo "make build VERSION=1.0.0 - compile the binary file with golang codes"
 	@echo "make clean - clean cache remove the binary file in the bin directory"
 	@echo "make lint - check golang syntax"
-	@echo "make benchmark - run benchmark"
+	@echo "make benchmark BENCHTIME=3x BENCHCOUNTS=1 - run benchmark"
 	@echo "make test - run test with -race parameter"
 	@echo "make run ARB_TEMPLATE_FILE=path/to/xx.arb ARB_LOCALE_FILE=path/to/xx.arb - run the service with arb files"

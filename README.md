@@ -47,3 +47,25 @@ Update the locale arb file without max corutines limit (or with '-c 0' parameter
 ```bash
 arb-updater -t path/to/template.arb -l path/to/locale.arb -sort -full-on
 ```
+
+## Unit Test
+
+Run the following command to do unit test:
+
+```bash
+make test
+```
+
+## Benchmark
+
+Run the following command to do benchmark:
+
+```bash
+make benchmark
+```
+
+Or run benchmark with specific benchmark time and counts:
+
+```bash
+make benchmark BENCHTIME=3x BENCHCOUNTS=1
+```

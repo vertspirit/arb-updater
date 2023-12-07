@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -47,7 +48,8 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		if merged, err = ents.Merge(params.Corutines, params.IsSort); err != nil {
+		ctx := context.Background()
+		if merged, err = ents.Merge(ctx, params.Corutines, params.IsSort); err != nil {
 			slog.Error(err.Error())
 			os.Exit(1)
 		}

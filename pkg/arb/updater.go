@@ -53,11 +53,10 @@ func (ae *ArbEntries) Merge(ctx context.Context, maxWorkers int, sortByKey bool)
 	wp := NewWorkerPool(maxWorkers)
 	go wp.Allocate(ae.TemplateEntries)
 	go func() {
-		merged = wp.ReadData(c)
+		merged = wp.ReadData()
 		defer cancel()
 	}()
 	wp.Run(ae.LocaleEntries)
-	<- wp.Done
 
 	for {
 		select {

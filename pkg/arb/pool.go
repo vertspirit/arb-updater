@@ -1,7 +1,6 @@
 package arb_update
 
 import (
-	"context"
 	"sync"
 )
 
@@ -23,8 +22,6 @@ type WorkerPool struct {
 	Wg          *sync.WaitGroup
 	Jobs        chan Job
 	Results     chan Result
-	Done        chan bool
-	Finished    chan bool
 	MaxWorkers  int
 }
 
@@ -32,12 +29,10 @@ func NewWorkerPool(num int) *WorkerPool {
 	wg := new(sync.WaitGroup)
 	jobs := make(chan Job, num)
 	results := make(chan Result, num)
-	done := make(chan bool)
 	return &WorkerPool {
 		Wg:         wg,
 		Jobs:       jobs,
 		Results:    results,
-		Done:       done,
 		MaxWorkers: num,
 	}
 }
@@ -73,13 +68,12 @@ func (wp *WorkerPool) Run(entries map[string]interface{}) {
 	close(wp.Results)
 }
 
-func (wp *WorkerPool) ReadData(ctx context.Context) *sync.Map {
+func (wp *WorkerPool) ReadData() *sync.Map {
 	entries := new(sync.Map)
 	for {
 		select {
 		case val, ok := <- wp.Results:
 			if !ok {
-				wp.Done <- true
 				return entries // break loop
 			} else {
 				//mutex.Lock()

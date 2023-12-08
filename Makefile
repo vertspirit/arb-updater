@@ -31,7 +31,7 @@ test:
 
 clean:
 	go clean
-	go clean -testcache
+	go clean -testcache -fuzzcache
 	@if [ -d bin ] ; then rm -rf bin ; fi
 	@if [ -d test ] ; then rm -rf test ; fi
 
